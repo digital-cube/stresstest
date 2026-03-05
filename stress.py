@@ -139,7 +139,64 @@ def bench_disk():
 
 def print_results(info, cpu, memory, disk):
     """Print benchmark results as a formatted table."""
-    pass
+    try:
+        from rich.console import Console
+        from rich.table import Table
+        from rich.panel import Panel
+
+        console = Console()
+
+        header = (
+            f"[bold]Host:[/] {info['hostname']}  "
+            f"[bold]CPUs:[/] {info['cpu_count']}  "
+            f"[bold]RAM:[/] {info['ram_gb']} GB  "
+            f"[bold]OS:[/] {info['os']}  "
+            f"[bold]Python:[/] {info['python']}"
+        )
+        console.print(Panel(header, title="[bold]stress — VM Benchmark[/]"))
+
+        table = Table(show_header=True, header_style="bold")
+        table.add_column("Test", style="cyan", width=14)
+        table.add_column("Metric", width=12)
+        table.add_column("Result", justify="right", style="green")
+
+        table.add_row("CPU", "ops/sec", f"{cpu['ops_per_sec']:,.1f}")
+        table.add_row("CPU", "time (s)", f"{cpu['elapsed_sec']}")
+        table.add_row("CPU", "cores", f"{cpu['cores_used']}")
+        table.add_row("", "", "")
+        table.add_row("Memory Write", "MB/s", f"{memory['write_mb_per_sec']:,.1f}")
+        table.add_row("Memory Read", "MB/s", f"{memory['read_mb_per_sec']:,.1f}")
+        table.add_row("", "", "")
+
+        if disk.get("error"):
+            table.add_row("Disk", "ERROR", disk["error"])
+        else:
+            table.add_row("Disk Seq W", "MB/s", f"{disk['seq_write_mb_per_sec']:,.1f}")
+            table.add_row("Disk Seq R", "MB/s", f"{disk['seq_read_mb_per_sec']:,.1f}")
+            table.add_row("Disk Random", "IOPS", f"{disk['random_iops']:,.1f}")
+
+        console.print(table)
+
+    except ImportError:
+        # Fallback: plain text
+        print(f"\n{'='*45}")
+        print(f"  stress — VM Benchmark")
+        print(f"  Host: {info['hostname']}  CPUs: {info['cpu_count']}  RAM: {info['ram_gb']} GB")
+        print(f"{'='*45}")
+        print(f"  {'Test':<14} {'Metric':<12} {'Result':>10}")
+        print(f"  {'-'*38}")
+        print(f"  {'CPU':<14} {'ops/sec':<12} {cpu['ops_per_sec']:>10,.1f}")
+        print(f"  {'CPU':<14} {'time (s)':<12} {cpu['elapsed_sec']:>10}")
+        print(f"  {'CPU':<14} {'cores':<12} {cpu['cores_used']:>10}")
+        print(f"  {'Mem Write':<14} {'MB/s':<12} {memory['write_mb_per_sec']:>10,.1f}")
+        print(f"  {'Mem Read':<14} {'MB/s':<12} {memory['read_mb_per_sec']:>10,.1f}")
+        if disk.get("error"):
+            print(f"  {'Disk':<14} {'ERROR':<12} {disk['error']}")
+        else:
+            print(f"  {'Disk Seq W':<14} {'MB/s':<12} {disk['seq_write_mb_per_sec']:>10,.1f}")
+            print(f"  {'Disk Seq R':<14} {'MB/s':<12} {disk['seq_read_mb_per_sec']:>10,.1f}")
+            print(f"  {'Disk Random':<14} {'IOPS':<12} {disk['random_iops']:>10,.1f}")
+        print(f"  {'='*38}\n")
 
 
 def main():
