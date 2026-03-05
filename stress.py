@@ -79,8 +79,62 @@ def bench_memory():
 
 
 def bench_disk():
-    """Disk benchmark — returns dict with results."""
-    pass
+    """Disk benchmark — sequential and random I/O."""
+    tmp_dir = tempfile.mkdtemp(prefix="stress_")
+    try:
+        file_path = os.path.join(tmp_dir, "benchmark.dat")
+        size = 256 * 1024 * 1024  # 256 MB
+        chunk = 1024 * 1024  # 1 MB
+
+        # Sequential write
+        data = os.urandom(chunk)
+        start = time.perf_counter()
+        with open(file_path, "wb") as f:
+            for _ in range(size // chunk):
+                f.write(data)
+            f.flush()
+            os.fsync(f.fileno())
+        seq_write_elapsed = time.perf_counter() - start
+
+        # Sequential read
+        start = time.perf_counter()
+        with open(file_path, "rb") as f:
+            while f.read(chunk):
+                pass
+        seq_read_elapsed = time.perf_counter() - start
+
+        os.remove(file_path)
+
+        # Random I/O — small files
+        num_files = 1000
+        small_data = os.urandom(4096)
+        start = time.perf_counter()
+        for i in range(num_files):
+            p = os.path.join(tmp_dir, f"f{i}")
+            with open(p, "wb") as f:
+                f.write(small_data)
+        for i in range(num_files):
+            p = os.path.join(tmp_dir, f"f{i}")
+            with open(p, "rb") as f:
+                f.read()
+        random_elapsed = time.perf_counter() - start
+
+        size_mb = size / (1024 * 1024)
+        total_ops = num_files * 2
+        return {
+            "seq_write_mb_per_sec": round(size_mb / seq_write_elapsed, 1),
+            "seq_read_mb_per_sec": round(size_mb / seq_read_elapsed, 1),
+            "random_iops": round(total_ops / random_elapsed, 1),
+        }
+    except OSError as e:
+        return {
+            "seq_write_mb_per_sec": 0,
+            "seq_read_mb_per_sec": 0,
+            "random_iops": 0,
+            "error": str(e),
+        }
+    finally:
+        shutil.rmtree(tmp_dir, ignore_errors=True)
 
 
 def print_results(info, cpu, memory, disk):
