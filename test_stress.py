@@ -1,6 +1,6 @@
 """Tests for stress benchmarks."""
 
-from stress import bench_cpu, get_system_info
+from stress import bench_cpu, bench_memory, get_system_info
 
 
 def test_get_system_info():
@@ -17,3 +17,11 @@ def test_bench_cpu_returns_results():
     assert "elapsed_sec" in result
     assert result["ops_per_sec"] > 0
     assert result["elapsed_sec"] > 0
+
+
+def test_bench_memory_returns_results():
+    result = bench_memory()
+    assert "write_mb_per_sec" in result
+    assert "read_mb_per_sec" in result
+    assert result["write_mb_per_sec"] > 0
+    assert result["read_mb_per_sec"] > 0

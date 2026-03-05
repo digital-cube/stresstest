@@ -50,8 +50,32 @@ def bench_cpu():
 
 
 def bench_memory():
-    """Memory benchmark — returns dict with results."""
-    pass
+    """Memory benchmark — sequential write/read throughput."""
+    size = 256 * 1024 * 1024  # 256 MB
+    chunk = 1024 * 1024  # 1 MB chunks
+    buf = bytearray(size)
+
+    # Sequential write
+    data = b"\xaa" * chunk
+    start = time.perf_counter()
+    for offset in range(0, size, chunk):
+        buf[offset : offset + chunk] = data
+    write_elapsed = time.perf_counter() - start
+
+    # Sequential read
+    start = time.perf_counter()
+    total = 0
+    mv = memoryview(buf)
+    for offset in range(0, size, chunk):
+        total += sum(mv[offset : offset + chunk])
+    read_elapsed = time.perf_counter() - start
+
+    size_mb = size / (1024 * 1024)
+    return {
+        "write_mb_per_sec": round(size_mb / write_elapsed, 1),
+        "read_mb_per_sec": round(size_mb / read_elapsed, 1),
+        "size_mb": int(size_mb),
+    }
 
 
 def bench_disk():
