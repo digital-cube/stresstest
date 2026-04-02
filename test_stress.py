@@ -1,6 +1,6 @@
 """Tests for stress benchmarks."""
 
-from stress import bench_cpu, bench_disk, bench_memory, get_system_info
+from stress import bench_cpu, bench_disk, bench_memory, bench_network, get_system_info
 
 
 def test_get_system_info():
@@ -35,3 +35,14 @@ def test_bench_disk_returns_results():
     assert result["seq_write_mb_per_sec"] > 0
     assert result["seq_read_mb_per_sec"] > 0
     assert result["random_iops"] > 0
+
+
+def test_bench_network_returns_results():
+    result = bench_network()
+    assert "download_mbps" in result
+    assert "upload_mbps" in result
+    assert "latency_ms" in result
+    if "error" not in result:
+        assert result["download_mbps"] > 0
+        assert result["upload_mbps"] > 0
+        assert result["latency_ms"] > 0
